@@ -32,7 +32,7 @@
       app.lib.current = app.sc.id;
       if (!MP.storage.save(app.lib) && !saveWarned) {
         saveWarned = true;
-        alert('Impossible d\'enregistrer dans ce navigateur (navigation privée ?). Pensez à exporter votre scénario.');
+        MP.notify('Enregistrement impossible', 'Ce navigateur refuse l\'enregistrement local (navigation privée ?). Pensez à exporter votre scénario en JSON.');
       }
     }, 300);
   }
@@ -217,38 +217,37 @@
   /* ---------- Import / export ---------- */
   function exportScenario() {
     const json = JSON.stringify(MP.exportData(app.sc), null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = MP.exportFileName(app.sc);
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    MP.saveFile(MP.exportFileName(app.sc), json, 'application/json');
   }
 
   function importScenario(file) {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       let result;
       try {
         result = MP.importData(String(reader.result).replace(/^\uFEFF/, ''));
       } catch (e) {
-        alert('Import impossible : ' + (e.isImportError ? e.message : 'fichier illisible.'));
+        MP.notify('Import impossible', e.isImportError ? e.message : 'Ce fichier est illisible.');
         return;
       }
       const sc = result.scenario;
-      if (app.lib.scenarios[sc.id] && !confirm(`« ${app.lib.scenarios[sc.id].title} » existe déjà dans votre bibliothèque.\n\nOK : le remplacer par le fichier importé.\nAnnuler : importer une copie à côté.`)) {
+      if (app.lib.scenarios[sc.id] && !(await MP.dialog({
+        title: 'Scénario déjà présent',
+        message: `« ${app.lib.scenarios[sc.id].title} » existe déjà dans votre bibliothèque. Le remplacer par le fichier importé, ou importer une copie à côté ?`,
+        okLabel: 'Remplacer', cancelLabel: 'Importer une copie',
+      }))) {
         sc.id = MP.uid('sc');
         sc.title = (sc.title || 'Sans titre') + ' (import)';
       }
       open(sc);
       const w = result.warnings;
       if (w.length) {
-        const shown = w.slice(0, 15).map((x) => '• ' + x).join('\n');
-        alert(`Scénario importé, avec ${w.length} correction(s) :\n\n${shown}${w.length > 15 ? `\n… et ${w.length - 15} autre(s).` : ''}`);
+        const shown = w.slice(0, 15);
+        if (w.length > 15) shown.push(`… et ${w.length - 15} autre(s).`);
+        MP.notify('Scénario importé', `${w.length} correction(s) apportée(s) au fichier :`, shown);
       }
     };
-    reader.onerror = () => alert('Impossible de lire ce fichier.');
+    reader.onerror = () => MP.notify('Import impossible', 'Le fichier n\'a pas pu être lu.');
     reader.readAsText(file, 'utf-8');
   }
 
@@ -308,10 +307,10 @@
 
     $('#library').addEventListener('change', (e) => open(app.lib.scenarios[e.target.value]));
 
-    $$('[data-action]').forEach((b) => b.addEventListener('click', () => {
+    $$('[data-action]').forEach((b) => b.addEventListener('click', async () => {
       const act = b.dataset.action;
       if (act === 'new') {
-        const title = prompt('Titre du nouveau scénario :', 'Nouveau scénario');
+        const title = await MP.dialog({ title: 'Nouveau scénario', message: 'Titre du scénario :', input: true, defaultValue: 'Nouveau scénario', okLabel: 'Créer' });
         if (title == null) return;
         const sc = MP.newScenario('murder');
         sc.title = title || 'Nouveau scénario';
@@ -323,7 +322,7 @@
       } else if (act === 'export') {
         exportScenario();
       } else if (act === 'delete') {
-        if (!confirm('Supprimer définitivement « ' + app.sc.title + ' » de ce navigateur ?')) return;
+        if (!(await MP.dialog({ title: 'Supprimer le scénario', message: `Supprimer définitivement « ${app.sc.title} » de ce navigateur ? Exportez-le d'abord si vous voulez le garder.`, okLabel: 'Supprimer', danger: true }))) return;
         delete app.lib.scenarios[app.sc.id];
         const rest = Object.values(app.lib.scenarios).sort((a, c) => (c.updatedAt || 0) - (a.updatedAt || 0));
         open(rest[0] || MP.newScenario());
@@ -348,7 +347,7 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !e.target.matches('input, textarea, select')) app.select(null);
+      if (e.key === 'Escape' && !e.target.matches('input, textarea, select') && !document.querySelector('.modal-back')) app.select(null);
     });
     window.addEventListener('resize', () => graphView.applyView());
   }

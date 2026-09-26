@@ -94,11 +94,11 @@
         ...choices.map((e) => h('option', { value: e.id, text: MP.label(e) })),
         opts.noCreate ? null : h('option', { value: '__new', text: '+ Créer ' + MP.KINDS[kind].label.toLowerCase() + '…' }),
       ]);
-      sel.addEventListener('change', () => {
+      sel.addEventListener('change', async () => {
         let id = sel.value;
         if (!id) return;
         if (id === '__new') {
-          const name = prompt('Nom du nouvel élément (' + MP.KINDS[kind].label.toLowerCase() + ') :');
+          const name = await MP.dialog({ title: 'Créer : ' + MP.KINDS[kind].label.toLowerCase(), message: 'Nom :', input: true, okLabel: 'Créer' });
           if (!name) { sel.value = ''; return; }
           const e = MP.create(sc, kind, kind === 'steps' ? { title: name } : { name });
           id = e.id;
@@ -135,8 +135,8 @@
     actions(id) {
       const bar = h('div', { class: 'panel-actions' }, [
         h('button', { type: 'button', text: 'Dupliquer', onclick: () => { const c = MP.duplicate(this.app.sc, id); this.app.changed({}); this.app.select(c.id); } }),
-        h('button', { type: 'button', class: 'danger', text: 'Supprimer', onclick: () => {
-          if (!confirm('Supprimer « ' + MP.nameOf(this.app.sc, id) + ' » ? Les liens vers cet élément seront retirés.')) return;
+        h('button', { type: 'button', class: 'danger', text: 'Supprimer', onclick: async () => {
+          if (!(await MP.dialog({ title: 'Supprimer', message: 'Supprimer « ' + MP.nameOf(this.app.sc, id) + ' » ? Les liens vers cet élément seront retirés.', okLabel: 'Supprimer', danger: true }))) return;
           MP.remove(this.app.sc, id); this.app.select(null); this.app.changed({});
         } }),
       ]);

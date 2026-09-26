@@ -304,7 +304,7 @@
     const go = h('button', { type: 'button', text: 'OK', onclick: () => {
       const [t, id] = res.value.split(':');
       if (t === 'i') {
-        if (to.value === '*') { alert('Un objet ne peut être donné qu\'à une seule personne.'); return; }
+        if (to.value === '*') { MP.notify('Impossible', 'Un objet ne peut être donné qu\'à une seule personne. Choisissez un destinataire.'); return; }
         sim.give(id, actor.id, to.value);
       } else sim.share(id, actor.id, to.value);
       app.refresh();
@@ -333,7 +333,12 @@
     npc.addEventListener('change', () => { opts.npc = npc.checked; MP.renderPrint(document.getElementById('print-area'), app); });
     root.appendChild(h('label', { class: 'check muted' }, [npc, 'inclure les non-joueurs']));
     root.appendChild(h('div', { class: 'spacer' }));
-    root.appendChild(h('button', { class: 'primary', type: 'button', text: 'Imprimer', onclick: () => window.print() }));
+    root.appendChild(h('button', {
+      class: 'primary', type: 'button',
+      text: MP.isHosted() ? 'Télécharger pour imprimer' : 'Imprimer',
+      title: MP.isHosted() ? 'Enregistre un fichier HTML qui ouvre la fenêtre d\'impression' : '',
+      onclick: () => MP.printPages(app.sc.title, document.getElementById('print-area').innerHTML),
+    }));
   };
 
   const para = (text) => String(text || '').split(/\n+/).filter(Boolean).map((l) => h('p', { text: l }));

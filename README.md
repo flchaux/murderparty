@@ -5,8 +5,13 @@ Il fonctionne entièrement dans le navigateur : aucun serveur, aucune installati
 
 ## Démarrer
 
-Ouvrir `index.html` dans un navigateur (double-clic suffit), ou publier le dossier
-avec GitHub Pages. Un scénario d'exemple, *Le dernier toast du comte*, est chargé au premier lancement.
+- **En ligne** : https://claude.ai/artifact/XgfZbSy34VprYpuSUg2J2F (privé, à partager depuis le menu Partager de la page).
+- **En local** : ouvrir `index.html` dans un navigateur (double-clic suffit).
+
+Pour republier après une modification : `python3 tools/build-artifact.py <sortie>.html`,
+puis publier ce fichier avec les dossiers `css/` et `js/` à côté.
+En ligne, l'impression passe par le bouton « Télécharger pour imprimer », qui enregistre
+un fichier HTML ouvrant la fenêtre d'impression. Un scénario d'exemple, *Le dernier toast du comte*, est chargé au premier lancement.
 
 Les scénarios sont enregistrés automatiquement dans le navigateur. Utilisez **Exporter**
 pour obtenir un fichier `.json` (sauvegarde, envoi à un co-auteur) et **Importer**, ou un
@@ -48,11 +53,13 @@ index.html
 docs/FORMAT-JSON.md
 modeles/modele-complet.json
 tests/import-export.test.js
+tools/build-artifact.py
 css/style.css
 js/model.js     modèle de données et stockage local
 js/example.js   scénario d'exemple
 js/engine.js    vérifications et simulation
 js/io.js        import et export JSON
+js/platform.js  boîtes de dialogue, téléchargement, impression (local ou en ligne)
 js/graph.js     mise en page et rendu du graphe
 js/editor.js    formulaires d'édition
 js/views.js     relations, ressources, analyse, simulation, impression

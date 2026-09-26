@@ -220,35 +220,74 @@
     MP.saveFile(MP.exportFileName(app.sc), json, 'application/json');
   }
 
+  async function importText(text) {
+    let result;
+    try {
+      result = MP.importData(String(text).replace(/^\uFEFF/, ''));
+    } catch (e) {
+      MP.notify('Import impossible', e.isImportError ? e.message : 'Ce contenu est illisible.');
+      return false;
+    }
+    const sc = result.scenario;
+    if (app.lib.scenarios[sc.id] && !(await MP.dialog({
+      title: 'Scénario déjà présent',
+      message: `« ${app.lib.scenarios[sc.id].title} » existe déjà dans votre bibliothèque. Le remplacer par le fichier importé, ou importer une copie à côté ?`,
+      okLabel: 'Remplacer', cancelLabel: 'Importer une copie',
+    }))) {
+      sc.id = MP.uid('sc');
+      sc.title = (sc.title || 'Sans titre') + ' (import)';
+    }
+    open(sc);
+    const w = result.warnings;
+    if (w.length) {
+      const shown = w.slice(0, 15);
+      if (w.length > 15) shown.push(`… et ${w.length - 15} autre(s).`);
+      MP.notify('Scénario importé', `${w.length} correction(s) apportée(s) au fichier :`, shown);
+    }
+    return true;
+  }
+
   function importScenario(file) {
     const reader = new FileReader();
-    reader.onload = async () => {
-      let result;
-      try {
-        result = MP.importData(String(reader.result).replace(/^\uFEFF/, ''));
-      } catch (e) {
-        MP.notify('Import impossible', e.isImportError ? e.message : 'Ce fichier est illisible.');
-        return;
-      }
-      const sc = result.scenario;
-      if (app.lib.scenarios[sc.id] && !(await MP.dialog({
-        title: 'Scénario déjà présent',
-        message: `« ${app.lib.scenarios[sc.id].title} » existe déjà dans votre bibliothèque. Le remplacer par le fichier importé, ou importer une copie à côté ?`,
-        okLabel: 'Remplacer', cancelLabel: 'Importer une copie',
-      }))) {
-        sc.id = MP.uid('sc');
-        sc.title = (sc.title || 'Sans titre') + ' (import)';
-      }
-      open(sc);
-      const w = result.warnings;
-      if (w.length) {
-        const shown = w.slice(0, 15);
-        if (w.length > 15) shown.push(`… et ${w.length - 15} autre(s).`);
-        MP.notify('Scénario importé', `${w.length} correction(s) apportée(s) au fichier :`, shown);
-      }
-    };
+    reader.onload = () => importText(reader.result);
     reader.onerror = () => MP.notify('Import impossible', 'Le fichier n\'a pas pu être lu.');
     reader.readAsText(file, 'utf-8');
+  }
+
+  /*
+   * Fenêtre d'import. Le choix de fichier passe par un vrai <label> relié au champ fichier :
+   * un clic simulé sur un champ caché est refusé quand la page est publiée en ligne.
+   * Coller le texte JSON reste possible si le sélecteur de fichiers est indisponible.
+   */
+  function openImportDialog() {
+    const close = () => { document.removeEventListener('keydown', onKey, true); back.remove(); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+    const file = h('input', { type: 'file', id: 'import-file', accept: '.json,application/json,text/plain', class: 'visually-hidden' });
+    file.addEventListener('change', () => {
+      const f = file.files[0];
+      if (!f) return;
+      close();
+      importScenario(f);
+    });
+    const text = h('textarea', { id: 'import-text', rows: 7, placeholder: '{ "title": "…", "steps": [ … ] }', spellcheck: 'false' });
+    const pasteBtn = h('button', { type: 'button', text: 'Importer le texte collé', onclick: async () => {
+      if (!text.value.trim()) { text.focus(); return; }
+      close();
+      await importText(text.value);
+    } });
+    const back = h('div', { class: 'modal-back' }, h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, [
+      h('h2', { text: 'Importer un scénario' }),
+      h('p', { text: 'Choisissez un fichier .json exporté par Intrigue ou écrit d\'après le modèle. Vous pouvez aussi déposer le fichier sur la page.' }),
+      h('div', { class: 'modal-actions start' }, [file, h('label', { for: 'import-file', class: 'btn primary', tabindex: '0', text: 'Choisir un fichier .json' })]),
+      h('p', { class: 'small', text: 'Ou collez ici le contenu du fichier :' }),
+      text,
+      h('div', { class: 'modal-actions' }, [h('button', { type: 'button', text: 'Annuler', onclick: close }), pasteBtn]),
+    ]));
+    back.addEventListener('mousedown', (e) => { if (e.target === back) close(); });
+    back.querySelector('label.btn').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(back);
+    back.querySelector('label.btn').focus();
   }
 
   /* ---------- Événements ---------- */
@@ -318,7 +357,7 @@
       } else if (act === 'example') {
         open(MP.exampleScenario());
       } else if (act === 'import') {
-        $('#import-file').click();
+        openImportDialog();
       } else if (act === 'export') {
         exportScenario();
       } else if (act === 'delete') {
@@ -328,10 +367,6 @@
         open(rest[0] || MP.newScenario());
       }
     }));
-    $('#import-file').addEventListener('change', (e) => {
-      if (e.target.files[0]) importScenario(e.target.files[0]);
-      e.target.value = '';
-    });
 
     // Glisser-déposer un fichier .json n'importe où dans la page pour l'importer.
     document.addEventListener('dragover', (e) => {

@@ -17,7 +17,7 @@ un petit escape game qui utilise chaque champ et chaque type d'étape. Le plus s
 | Action | Comment |
 | --- | --- |
 | Exporter | Bouton **Exporter** en haut : télécharge le scénario ouvert, par exemple `le-dernier-toast-du-comte.json`. |
-| Importer | Bouton **Importer**, ou **glisser-déposer** le fichier `.json` n'importe où sur la page. |
+| Importer | Bouton **Importer**, puis **Choisir un fichier .json**, ou **coller le contenu** du fichier dans la zone de texte. On peut aussi **glisser-déposer** le fichier n'importe où sur la page. |
 | Scénario déjà présent | Si le fichier porte le même `id` qu'un scénario de la bibliothèque, l'outil demande : **OK** pour le remplacer, **Annuler** pour importer une copie à côté. |
 
 L'import est tolérant. Il corrige ce qu'il peut et affiche la liste des corrections

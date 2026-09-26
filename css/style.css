@@ -429,6 +429,16 @@ body.dropping::after {
 .modal p { margin: 0; color: var(--muted); }
 .modal ul { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+label.btn {
+  display: inline-block; cursor: pointer; border: 1px solid var(--border-strong); border-radius: 6px;
+  padding: 6px 12px; background: var(--surface); font-weight: 550;
+}
+label.btn.primary { background: var(--accent-main); border-color: var(--accent-main); color: #fff; }
+label.btn:hover { filter: brightness(1.08); }
+label.btn:focus-visible { outline: 2px solid var(--accent-main); outline-offset: 2px; }
+.modal-actions.start { justify-content: flex-start; }
+.modal textarea { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; opacity: 0; }
 button.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 /* ---------- Petits écrans ---------- */

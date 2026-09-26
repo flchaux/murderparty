@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intrigue, atelier de scénarios</title>
+  <meta name="description" content="Concevoir et vérifier des murder parties, escape games et chasses au trésor : étapes, prérequis, objets, connaissances, personnages.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">Intrigue</div>
+      <button id="scenario-title" class="scenario-title" title="Modifier les informations du scénario"></button>
+      <span id="scenario-type" class="pill"></span>
+      <div class="spacer"></div>
+      <select id="library" title="Mes scénarios"></select>
+      <button data-action="new">Nouveau</button>
+      <button data-action="example">Exemple</button>
+      <button data-action="import">Importer</button>
+      <button data-action="export">Exporter</button>
+      <button data-action="delete" class="danger">Supprimer</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </header>
+
+    <aside class="sidebar">
+      <nav class="tabs small" id="list-tabs">
+        <button data-list="steps" class="active">Étapes</button>
+        <button data-list="items">Objets</button>
+        <button data-list="knowledge" title="Connaissances">Infos</button>
+        <button data-list="characters">Persos</button>
+      </nav>
+      <div class="list-tools">
+        <input type="search" id="list-search" placeholder="Rechercher…">
+        <button id="list-add" class="primary">+ Ajouter</button>
+      </div>
+      <ul id="entity-list" class="entity-list"></ul>
+      <div class="legend" id="legend"></div>
+    </aside>
+
+    <main class="main">
+      <nav class="tabs" id="view-tabs">
+        <button data-view="graph" class="active">Graphe</button>
+        <button data-view="relations">Relations</button>
+        <button data-view="resources">Ressources</button>
+        <button data-view="analysis">Analyse <span id="issue-badge" class="badge"></span></button>
+        <button data-view="print">Impression</button>
+      </nav>
+
+      <section class="view active" data-view="graph">
+        <div class="graph-toolbar">
+          <div class="seg" id="graph-mode">
+            <button data-mode="compact" class="active" title="Seulement les étapes, liens étiquetés par l'objet ou la connaissance">Compact</button>
+            <button data-mode="detailed" title="Objets, connaissances et personnages affichés comme des nœuds">Détaillé</button>
+          </div>
+          <label class="check"><input type="checkbox" id="graph-labels" checked> Étiquettes</label>
+          <button id="graph-fit">Ajuster</button>
+          <button id="graph-relayout" title="Oublier les positions déplacées à la main">Réorganiser</button>
+          <div class="spacer"></div>
+          <button id="sim-toggle" class="primary">▶ Simulation</button>
+        </div>
+        <div class="graph-wrap">
+          <svg id="graph" class="graph-svg"></svg>
+          <div class="graph-hint">Molette : zoom · Glisser le fond : déplacer · Glisser un nœud : le repositionner · Clic : sélectionner</div>
+        </div>
+      </section>
+
+      <section class="view" data-view="relations">
+        <div class="view-scroll">
+          <p class="muted">Relations déclarées dans les fiches personnages. Une flèche va de celui qui pense vers celui dont il parle.</p>
+          <svg id="relations" class="relations-svg"></svg>
+        </div>
+      </section>
+
+      <section class="view" data-view="resources">
+        <div class="view-scroll" id="resources-view"></div>
+      </section>
+
+      <section class="view" data-view="analysis">
+        <div class="view-scroll" id="analysis-view"></div>
+      </section>
+
+      <section class="view" data-view="print">
+        <div class="print-toolbar" id="print-toolbar"></div>
+        <div class="view-scroll print-preview">
+          <div id="print-area"></div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="panel" id="panel"></aside>
+  </div>
+
+  <script src="js/model.js"></script>
+  <script src="js/example.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

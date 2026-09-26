@@ -1,0 +1,47 @@
+# Intrigue, atelier de scénarios
+
+Outil web pour concevoir des **murder parties**, **escape games** et **chasses au trésor**.
+Il fonctionne entièrement dans le navigateur : aucun serveur, aucune installation.
+
+## Démarrer
+
+Ouvrir `index.html` dans un navigateur (double-clic suffit), ou publier le dossier
+avec GitHub Pages. Un scénario d'exemple, *Le dernier toast du comte*, est chargé au premier lancement.
+
+Les scénarios sont enregistrés automatiquement dans le navigateur. Utilisez **Exporter**
+pour obtenir un fichier `.json` (sauvegarde, envoi à un co-auteur) et **Importer** pour le recharger.
+
+## Le modèle
+
+- **Étapes** : énigme, fouille, interrogatoire, révélation, action, fin. Chaque étape a des
+  *prérequis* (étapes terminées, objets possédés, connaissances acquises) et *donne* des objets
+  et des connaissances. Elle peut être réservée à certains personnages, ou être *publique*
+  (ses connaissances sont révélées à tous).
+- **Objets** : physiques, ils se donnent d'un joueur à l'autre et ne sont jamais consommés.
+- **Connaissances** : informations, indices, codes. Elles se partagent.
+- **Personnages** : présentation, secret, objectifs, objets et connaissances de départ, relations.
+
+## Les vues
+
+| Vue | Rôle |
+| --- | --- |
+| Graphe | Enchaînement des étapes. *Compact* : liens étiquetés par l'objet ou l'information transmise. *Détaillé* : objets, connaissances et personnages comme nœuds. Cliquer un nœud met en évidence tout ce qui mène à lui et en découle. |
+| Simulation | Jouer le scénario pas à pas, par joueur ou en équipe, avec échanges d'objets et d'informations. |
+| Relations | Carte des relations entre personnages. |
+| Ressources | D'où vient et où sert chaque objet et connaissance. |
+| Analyse | Étapes inatteignables, objets sans source ou inutilisés, étapes qui exigent une coopération, autonomie de chaque personnage, déroulé au plus court par vagues. |
+| Impression | Fiches personnages, cartes objets et indices à découper, fiches d'énigmes, guide du maître du jeu. |
+
+## Structure
+
+```
+index.html
+css/style.css
+js/model.js     modèle de données et stockage local
+js/example.js   scénario d'exemple
+js/engine.js    vérifications et simulation
+js/graph.js     mise en page et rendu du graphe
+js/editor.js    formulaires d'édition
+js/views.js     relations, ressources, analyse, simulation, impression
+js/app.js       application
+```

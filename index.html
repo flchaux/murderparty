@@ -17,8 +17,8 @@
       <select id="library" title="Mes scénarios"></select>
       <button data-action="new">Nouveau</button>
       <button data-action="example">Exemple</button>
-      <button data-action="import">Importer</button>
-      <button data-action="export">Exporter</button>
+      <button data-action="import" title="Importer un fichier .json (ou le glisser-déposer sur la page)">Importer</button>
+      <button data-action="export" title="Télécharger ce scénario en .json">Exporter</button>
       <button data-action="delete" class="danger">Supprimer</button>
       <input type="file" id="import-file" accept=".json,application/json" hidden>
     </header>
@@ -94,6 +94,7 @@
   <script src="js/model.js"></script>
   <script src="js/example.js"></script>
   <script src="js/engine.js"></script>
+  <script src="js/io.js"></script>
   <script src="js/graph.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/views.js"></script>

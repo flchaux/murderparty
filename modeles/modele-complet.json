@@ -1,0 +1,362 @@
+{
+  "_aide": "Modèle complet au format Intrigue. Chaque champ possible y figure au moins une fois. Voir docs/FORMAT-JSON.md. Les champs qui commencent par _ sont des commentaires ignorés à l'import.",
+  "format": "intrigue-scenario",
+  "version": 1,
+
+  "id": "sc_modele_labo",
+  "title": "Le laboratoire du professeur Ardent",
+  "type": "escape",
+  "players": "3 joueurs + 1 maître du jeu",
+  "duration": "1 h",
+  "synopsis": "Le professeur Ardent a disparu en laissant son laboratoire verrouillé. Une fuite de gaz vient de déclencher l'alarme : vous avez une heure pour préparer l'antidote et sortir.\nChacun de vous connaît une petite partie des secrets du professeur.",
+  "truth": "Le professeur n'a pas fui : il teste ses anciens collaborateurs. L'antidote se prépare avec la fiole bleue, jamais la rouge. Le mot de passe du coffret est CURIE, son idole.",
+
+  "characters": [
+    {
+      "id": "c_ardent",
+      "name": "Professeur Ardent",
+      "role": "Le savant disparu",
+      "player": false,
+      "color": "#64748b",
+      "description": "Chimiste génial et un peu fantasque. Sa voix, enregistrée, guide les joueurs (jouée par le maître du jeu).",
+      "secret": "Il observe les joueurs par une caméra cachée.",
+      "objectives": "Vérifier que ses collaborateurs savent coopérer.",
+      "startItems": [],
+      "startKnow": [],
+      "relations": []
+    },
+    {
+      "id": "c_ines",
+      "name": "Inès Morel",
+      "role": "L'assistante",
+      "player": true,
+      "color": "#e11d48",
+      "description": "Assistante du professeur depuis cinq ans. Elle seule possède un badge d'accès à la réserve.",
+      "secret": "Vous avez postulé en cachette dans un laboratoire concurrent.",
+      "objectives": "Sortir du laboratoire.\nNe pas laisser Lina fouiller dans vos affaires.",
+      "startItems": ["i_badge"],
+      "startKnow": ["k_habitude"],
+      "relations": [
+        { "to": "c_ardent", "label": "Admire son mentor" },
+        { "to": "c_lina", "label": "Méfiance envers cette journaliste" }
+      ]
+    },
+    {
+      "id": "c_theo",
+      "name": "Théo Garnier",
+      "role": "Le stagiaire",
+      "player": true,
+      "color": "#2563eb",
+      "description": "Stagiaire depuis trois semaines, il a vu le professeur taper le code de son casier.",
+      "secret": "Vous avez cassé un appareil la semaine dernière sans le dire.",
+      "objectives": "Sortir du laboratoire.\nImpressionner Inès.",
+      "startItems": [],
+      "startKnow": ["k_code_casier"],
+      "relations": [
+        { "to": "c_ines", "label": "Veut l'impressionner" }
+      ]
+    },
+    {
+      "id": "c_lina",
+      "name": "Lina Faure",
+      "role": "La journaliste",
+      "player": true,
+      "color": "#16a34a",
+      "description": "Journaliste scientifique venue interviewer le professeur. Elle ne se sépare jamais de sa lampe UV.",
+      "secret": "Vous enquêtez sur des financements douteux du laboratoire.",
+      "objectives": "Sortir du laboratoire.\nTrouver une preuve pour votre article.",
+      "startItems": ["i_lampe_uv"],
+      "startKnow": [],
+      "relations": [
+        { "to": "c_ardent", "label": "Enquête sur lui" }
+      ]
+    }
+  ],
+
+  "items": [
+    {
+      "id": "i_badge",
+      "name": "Badge d'accès",
+      "description": "Badge magnétique au nom d'Inès Morel.",
+      "location": "",
+      "redHerring": false,
+      "notes": "Remis à Inès au début de la partie."
+    },
+    {
+      "id": "i_lampe_uv",
+      "name": "Lampe UV",
+      "description": "Petite lampe à lumière noire.",
+      "location": "",
+      "redHerring": false,
+      "notes": "Remise à Lina au début de la partie."
+    },
+    {
+      "id": "i_carnet",
+      "name": "Carnet du professeur",
+      "description": "Carnet relié de cuir, pages couvertes de formules.",
+      "location": "Vestiaire, casier n°3",
+      "redHerring": false,
+      "notes": "Glisser la petite clé dorée dans la reliure."
+    },
+    {
+      "id": "i_cle_coffre",
+      "name": "Petite clé dorée",
+      "description": "Une clé minuscule, cachée dans la reliure du carnet.",
+      "location": "Dans la reliure du carnet",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "i_fiole_bleue",
+      "name": "Fiole bleue",
+      "description": "Liquide bleu, étiquette « Stabilisant ».",
+      "location": "Réserve, armoire du haut",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "i_fiole_rouge",
+      "name": "Fiole rouge",
+      "description": "Liquide rouge, étiquette effacée.",
+      "location": "Réserve, armoire du haut",
+      "redHerring": true,
+      "notes": "Fausse piste : la mélanger fait perdre 5 minutes (pénalité annoncée par le maître du jeu)."
+    },
+    {
+      "id": "i_antidote",
+      "name": "Antidote",
+      "description": "Flacon d'antidote prêt à l'emploi.",
+      "location": "",
+      "redHerring": false,
+      "notes": "Remis par le maître du jeu quand le mélange est correct."
+    }
+  ],
+
+  "knowledge": [
+    {
+      "id": "k_alarme",
+      "name": "Vous avez 60 minutes",
+      "description": "L'alarme indique que le gaz deviendra dangereux dans une heure.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_habitude",
+      "name": "Le professeur cache tout dans son casier",
+      "description": "Il y range ses notes les plus précieuses.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_code_casier",
+      "name": "Code du casier : 3-1-4",
+      "description": "Vous avez vu le professeur taper 3, 1, 4.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_message_uv",
+      "name": "« Le bleu apaise, le rouge brûle »",
+      "description": "Message invisible révélé par la lampe UV dans le carnet.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_mot_passe",
+      "name": "Mot de passe : CURIE",
+      "description": "L'assistant vocal finit par lâcher le nom de l'idole du professeur.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_formule",
+      "name": "Formule : 2 doses pour 1 d'eau",
+      "description": "Fiche trouvée dans le coffret électronique.",
+      "redHerring": false,
+      "notes": ""
+    },
+    {
+      "id": "k_rumeur",
+      "name": "Le professeur aurait fui à l'étranger",
+      "description": "Rumeur répétée par l'assistant vocal. Sans intérêt pour s'échapper.",
+      "redHerring": true,
+      "notes": ""
+    }
+  ],
+
+  "steps": [
+    {
+      "id": "s_intro",
+      "title": "Briefing : l'alarme retentit",
+      "type": "revelation",
+      "act": "Ouverture",
+      "location": "Laboratoire",
+      "duration": "3",
+      "public": true,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": [],
+      "reqKnow": [],
+      "giveItems": [],
+      "giveKnow": ["k_alarme"],
+      "description": "Le maître du jeu lance l'alarme et lit le synopsis.",
+      "playerText": "Une sirène hurle. Sur l'écran : « FUITE DÉTECTÉE. ÉVACUATION IMPOSSIBLE. 60:00 ».",
+      "solution": "",
+      "hints": ""
+    },
+    {
+      "id": "s_casier",
+      "title": "Ouvrir le casier du professeur",
+      "type": "enigme",
+      "act": "Phase 1",
+      "location": "Vestiaire",
+      "duration": "5",
+      "public": false,
+      "who": [],
+      "reqSteps": ["s_intro"],
+      "reqItems": [],
+      "reqKnow": ["k_code_casier"],
+      "giveItems": ["i_carnet"],
+      "giveKnow": [],
+      "description": "Cadenas à 3 chiffres. Théo connaît le code, encore faut-il qu'il le partage.",
+      "playerText": "Casier n°3. Cadenas à trois molettes. Une étiquette : « π ne ment jamais ».",
+      "solution": "314",
+      "hints": "L'étiquette parle d'un nombre célèbre.\nLes trois premiers chiffres de π."
+    },
+    {
+      "id": "s_reserve",
+      "title": "Entrer dans la réserve",
+      "type": "action",
+      "act": "Phase 1",
+      "location": "Réserve",
+      "duration": "3",
+      "public": false,
+      "who": ["c_ines"],
+      "reqSteps": ["s_intro"],
+      "reqItems": ["i_badge"],
+      "reqKnow": [],
+      "giveItems": ["i_fiole_bleue", "i_fiole_rouge"],
+      "giveKnow": [],
+      "description": "Seule Inès peut passer son badge sur le lecteur.",
+      "playerText": "",
+      "solution": "",
+      "hints": ""
+    },
+    {
+      "id": "s_assistant",
+      "title": "Dialoguer avec l'assistant vocal",
+      "type": "dialogue",
+      "act": "Phase 1",
+      "location": "Laboratoire",
+      "duration": "5",
+      "public": false,
+      "who": [],
+      "reqSteps": ["s_intro"],
+      "reqItems": [],
+      "reqKnow": [],
+      "giveItems": [],
+      "giveKnow": ["k_mot_passe", "k_rumeur"],
+      "description": "Le maître du jeu joue l'assistant vocal. Il ne donne le mot de passe que si on lui demande l'idole du professeur.",
+      "playerText": "",
+      "solution": "",
+      "hints": "Qui le professeur admire-t-il ? Regardez les portraits au mur."
+    },
+    {
+      "id": "s_uv",
+      "title": "Révéler le message invisible",
+      "type": "fouille",
+      "act": "Phase 2",
+      "location": "Laboratoire",
+      "duration": "3",
+      "public": false,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": ["i_carnet", "i_lampe_uv"],
+      "reqKnow": [],
+      "giveItems": [],
+      "giveKnow": ["k_message_uv"],
+      "description": "Il faut réunir le carnet (casier) et la lampe (Lina).",
+      "playerText": "",
+      "solution": "",
+      "hints": ""
+    },
+    {
+      "id": "s_reliure",
+      "title": "Examiner la reliure du carnet",
+      "type": "fouille",
+      "act": "Phase 2",
+      "location": "",
+      "duration": "2",
+      "public": false,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": ["i_carnet"],
+      "reqKnow": [],
+      "giveItems": ["i_cle_coffre"],
+      "giveKnow": [],
+      "description": "Une bosse dans la reliure trahit la petite clé.",
+      "playerText": "",
+      "solution": "",
+      "hints": "Le carnet est anormalement épais au dos."
+    },
+    {
+      "id": "s_coffret",
+      "title": "Ouvrir le coffret électronique",
+      "type": "enigme",
+      "act": "Phase 2",
+      "location": "Bureau",
+      "duration": "8",
+      "public": false,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": ["i_cle_coffre"],
+      "reqKnow": ["k_mot_passe"],
+      "giveItems": [],
+      "giveKnow": ["k_formule"],
+      "description": "Serrure à clé puis clavier alphabétique.",
+      "playerText": "Un coffret métallique : une serrure, puis un clavier de 5 lettres.",
+      "solution": "CURIE",
+      "hints": "La clé ne suffit pas.\nL'assistant vocal connaît le mot de passe."
+    },
+    {
+      "id": "s_antidote",
+      "title": "Préparer l'antidote",
+      "type": "enigme",
+      "act": "Phase 3",
+      "location": "Paillasse",
+      "duration": "8",
+      "public": false,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": ["i_fiole_bleue"],
+      "reqKnow": ["k_formule", "k_message_uv"],
+      "giveItems": ["i_antidote"],
+      "giveKnow": [],
+      "description": "Les joueurs doivent choisir la bonne fiole et les bonnes proportions.",
+      "playerText": "Une éprouvette graduée, un bécher d'eau, deux fioles. Une seule combinaison sauvera tout le monde.",
+      "solution": "2 doses de fiole bleue pour 1 dose d'eau",
+      "hints": "Relisez le message invisible.\nLe bleu apaise : c'est la bonne fiole."
+    },
+    {
+      "id": "s_sortie",
+      "title": "Sortie du laboratoire",
+      "type": "fin",
+      "act": "Final",
+      "location": "Porte principale",
+      "duration": "2",
+      "public": true,
+      "who": [],
+      "reqSteps": [],
+      "reqItems": ["i_antidote"],
+      "reqKnow": ["k_alarme"],
+      "giveItems": [],
+      "giveKnow": [],
+      "description": "La porte se déverrouille. Le maître du jeu révèle la vérité.",
+      "playerText": "",
+      "solution": "",
+      "hints": ""
+    }
+  ],
+
+  "positions": {}
+}

@@ -9,7 +9,16 @@ Ouvrir `index.html` dans un navigateur (double-clic suffit), ou publier le dossi
 avec GitHub Pages. Un scénario d'exemple, *Le dernier toast du comte*, est chargé au premier lancement.
 
 Les scénarios sont enregistrés automatiquement dans le navigateur. Utilisez **Exporter**
-pour obtenir un fichier `.json` (sauvegarde, envoi à un co-auteur) et **Importer** pour le recharger.
+pour obtenir un fichier `.json` (sauvegarde, envoi à un co-auteur) et **Importer**, ou un
+glisser-déposer du fichier sur la page, pour le recharger.
+
+## Format JSON
+
+- [`docs/FORMAT-JSON.md`](docs/FORMAT-JSON.md) : description de chaque champ, règles de logique,
+  exemple minimal, conseils pour écrire ou faire générer un scénario.
+- [`modeles/modele-complet.json`](modeles/modele-complet.json) : modèle qui utilise tous les champs,
+  prêt à être copié, modifié et importé.
+- `node tests/import-export.test.js` vérifie le format.
 
 ## Le modèle
 
@@ -36,10 +45,14 @@ pour obtenir un fichier `.json` (sauvegarde, envoi à un co-auteur) et **Importe
 
 ```
 index.html
+docs/FORMAT-JSON.md
+modeles/modele-complet.json
+tests/import-export.test.js
 css/style.css
 js/model.js     modèle de données et stockage local
 js/example.js   scénario d'exemple
 js/engine.js    vérifications et simulation
+js/io.js        import et export JSON
 js/graph.js     mise en page et rendu du graphe
 js/editor.js    formulaires d'édition
 js/views.js     relations, ressources, analyse, simulation, impression

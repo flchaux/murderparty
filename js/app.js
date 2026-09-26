@@ -216,10 +216,11 @@
 
   /* ---------- Import / export ---------- */
   function exportScenario() {
-    const blob = new Blob([JSON.stringify(app.sc, null, 2)], { type: 'application/json' });
+    const json = JSON.stringify(MP.exportData(app.sc), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = (app.sc.title || 'scenario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.json';
+    a.download = MP.exportFileName(app.sc);
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -228,19 +229,27 @@
   function importScenario(file) {
     const reader = new FileReader();
     reader.onload = () => {
+      let result;
       try {
-        const data = JSON.parse(reader.result);
-        if (!data || !Array.isArray(data.steps)) throw new Error('format');
-        if (data.id && app.lib.scenarios[data.id] && !confirm('Ce scénario existe déjà dans votre bibliothèque. Le remplacer ? (Annuler = importer une copie)')) {
-          data.id = MP.uid('sc');
-          data.title = (data.title || 'Sans titre') + ' (import)';
-        }
-        open(data);
+        result = MP.importData(String(reader.result).replace(/^\uFEFF/, ''));
       } catch (e) {
-        alert('Ce fichier n\'est pas un scénario Intrigue valide.');
+        alert('Import impossible : ' + (e.isImportError ? e.message : 'fichier illisible.'));
+        return;
+      }
+      const sc = result.scenario;
+      if (app.lib.scenarios[sc.id] && !confirm(`« ${app.lib.scenarios[sc.id].title} » existe déjà dans votre bibliothèque.\n\nOK : le remplacer par le fichier importé.\nAnnuler : importer une copie à côté.`)) {
+        sc.id = MP.uid('sc');
+        sc.title = (sc.title || 'Sans titre') + ' (import)';
+      }
+      open(sc);
+      const w = result.warnings;
+      if (w.length) {
+        const shown = w.slice(0, 15).map((x) => '• ' + x).join('\n');
+        alert(`Scénario importé, avec ${w.length} correction(s) :\n\n${shown}${w.length > 15 ? `\n… et ${w.length - 15} autre(s).` : ''}`);
       }
     };
-    reader.readAsText(file);
+    reader.onerror = () => alert('Impossible de lire ce fichier.');
+    reader.readAsText(file, 'utf-8');
   }
 
   /* ---------- Événements ---------- */
@@ -323,6 +332,19 @@
     $('#import-file').addEventListener('change', (e) => {
       if (e.target.files[0]) importScenario(e.target.files[0]);
       e.target.value = '';
+    });
+
+    // Glisser-déposer un fichier .json n'importe où dans la page pour l'importer.
+    document.addEventListener('dragover', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) { e.preventDefault(); document.body.classList.add('dropping'); }
+    });
+    document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('dropping'); });
+    document.addEventListener('drop', (e) => {
+      document.body.classList.remove('dropping');
+      const file = e.dataTransfer && e.dataTransfer.files[0];
+      if (!file) return;
+      e.preventDefault();
+      importScenario(file);
     });
 
     document.addEventListener('keydown', (e) => {

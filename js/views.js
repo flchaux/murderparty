@@ -14,11 +14,80 @@
   const initials = (name) => name.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(-2).map((w) => w[0]).join('') || name[0] || '?';
 
   /* ---------------- Relations entre personnages ---------------- */
+  /*
+   * Zoom et déplacement de la carte des relations, par la zone affichée (viewBox).
+   * La zone est conservée d'un rendu à l'autre tant que le scénario et la taille de la carte ne changent pas.
+   */
+  const relView = { key: null, full: null, vb: null, drag: null, svg: null, onSelect: null };
+
+  function relApply() {
+    const v = relView.vb;
+    if (v && relView.svg) relView.svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+  }
+
+  /* Zoome d'un facteur f autour d'un point de la carte (par défaut le centre de la zone affichée). */
+  function relZoom(f, px, py) {
+    const v = relView.vb; const full = relView.full;
+    if (!v) return;
+    const w = Math.min(full.w * 3, Math.max(full.w * 0.12, v.w / f));
+    const s = w / v.w;
+    const cx = px == null ? v.x + v.w / 2 : px; const cy = py == null ? v.y + v.h / 2 : py;
+    relView.vb = { x: cx - (cx - v.x) * s, y: cy - (cy - v.y) * s, w, h: v.h * s };
+    relApply();
+  }
+
+  function relPoint(svg, ev) {
+    const m = svg.getScreenCTM();
+    if (!m) return null;
+    const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  function relBind(svg) {
+    if (svg.dataset.zoomBound) return;
+    svg.dataset.zoomBound = '1';
+    relView.svg = svg;
+    svg.addEventListener('wheel', (ev) => {
+      ev.preventDefault();
+      const p = relPoint(svg, ev);
+      relZoom(Math.exp(-ev.deltaY * 0.0015), p && p.x, p && p.y);
+    }, { passive: false });
+    svg.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0 || !relView.vb) return;
+      const node = ev.target.closest('.rel-node');
+      relView.drag = { id: node ? node.dataset.id : null, sx: ev.clientX, sy: ev.clientY, vx: relView.vb.x, vy: relView.vb.y, moved: false };
+      svg.setPointerCapture(ev.pointerId);
+    });
+    svg.addEventListener('pointermove', (ev) => {
+      const d = relView.drag;
+      if (!d) return;
+      const dx = ev.clientX - d.sx; const dy = ev.clientY - d.sy;
+      if (!d.moved && Math.hypot(dx, dy) < 4) return;
+      d.moved = true;
+      const r = svg.getBoundingClientRect();
+      const unit = Math.max(relView.vb.w / r.width, relView.vb.h / r.height);
+      relView.vb.x = d.vx - dx * unit; relView.vb.y = d.vy - dy * unit;
+      relApply();
+    });
+    svg.addEventListener('pointerup', () => {
+      const d = relView.drag;
+      relView.drag = null;
+      if (d && !d.moved && relView.onSelect) relView.onSelect(d.id);
+    });
+    const btn = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
+    btn('rel-zoom-in', () => relZoom(1.3));
+    btn('rel-zoom-out', () => relZoom(1 / 1.3));
+    btn('rel-fit', () => { relView.vb = Object.assign({}, relView.full); relApply(); });
+  }
+
   MP.renderRelations = function (svg, app) {
     const sc = app.sc;
+    relBind(svg);
+    relView.onSelect = (id) => app.select(id);
     svg.textContent = '';
     const chars = sc.characters;
     if (!chars.length) {
+      relView.key = null; relView.vb = null;
       svg.setAttribute('viewBox', '0 0 600 120');
       const t = svgEl('text', { x: 300, y: 60, 'text-anchor': 'middle', class: 'rel-empty' }, svg);
       t.textContent = 'Aucun personnage pour l\'instant.';
@@ -28,7 +97,10 @@
     const R = Math.max(170, n * 42);
     const W = 2 * R + 360; const H = 2 * R + 200;
     const cx = W / 2; const cy = H / 2;
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const key = sc.id + ':' + W + 'x' + H;
+    relView.full = { x: 0, y: 0, w: W, h: H };
+    if (relView.key !== key || !relView.vb) { relView.key = key; relView.vb = Object.assign({}, relView.full); }
+    relApply();
     const defs = svgEl('defs', {}, svg);
     const m = svgEl('marker', { id: 'rel-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 8, markerHeight: 8, orient: 'auto' }, defs);
     svgEl('path', { d: 'M0,0 L10,5 L0,10 z', class: 'rel-arrow' }, m);
@@ -64,7 +136,7 @@
     }
     for (const c of chars) {
       const p = pos[c.id];
-      const g = svgEl('g', { class: 'rel-node' + (sel === c.id ? ' selected' : '') + (c.player ? '' : ' npc'), transform: `translate(${p.x},${p.y})` }, svg);
+      const g = svgEl('g', { class: 'rel-node' + (sel === c.id ? ' selected' : '') + (c.player ? '' : ' npc'), transform: `translate(${p.x},${p.y})`, 'data-id': c.id }, svg);
       svgEl('circle', { r: 28, style: 'fill:' + c.color }, g);
       const t = svgEl('text', { y: 6, 'text-anchor': 'middle', class: 'rel-initials' }, g);
       t.textContent = initials(c.name).slice(0, 2);
@@ -72,7 +144,6 @@
       name.textContent = c.name;
       const role = svgEl('text', { y: 64, 'text-anchor': 'middle', class: 'rel-role' }, g);
       role.textContent = c.role + (c.player ? '' : ' (non joueur)');
-      g.addEventListener('click', () => app.select(c.id));
     }
   };
 

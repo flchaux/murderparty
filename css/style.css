@@ -333,7 +333,7 @@ table.grid tr.selected td { background: var(--accent-soft); }
 .res-know { color: var(--know); }
 
 /* ---------- Relations ---------- */
-.relations-svg { width: 100%; max-width: 1000px; height: auto; display: block; margin: 0 auto; }
+.relations-svg .rel-node { cursor: pointer; }
 .rel-edge { fill: none; stroke-width: 2; opacity: .8; }
 .rel-arrow { fill: var(--muted); }
 .rel-label { font-size: 12px; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }

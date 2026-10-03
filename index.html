@@ -66,9 +66,16 @@
       </section>
 
       <section class="view" data-view="relations">
-        <div class="view-scroll">
-          <p class="muted">Relations déclarées dans les fiches personnages. Une flèche va de celui qui pense vers celui dont il parle.</p>
-          <svg id="relations" class="relations-svg"></svg>
+        <div class="graph-toolbar">
+          <span class="muted small">Une flèche va de celui qui pense vers celui dont il parle.</span>
+          <div class="spacer"></div>
+          <button id="rel-zoom-out" title="Dézoomer" aria-label="Dézoomer">−</button>
+          <button id="rel-zoom-in" title="Zoomer" aria-label="Zoomer">+</button>
+          <button id="rel-fit">Ajuster</button>
+        </div>
+        <div class="graph-wrap">
+          <svg id="relations" class="graph-svg relations-svg"></svg>
+          <div class="graph-hint">Molette ou + / − : zoom · Glisser le fond : déplacer · Clic : sélectionner</div>
         </div>
       </section>
 

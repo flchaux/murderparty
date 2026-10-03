@@ -293,6 +293,19 @@
     document.body.dataset.view = v;
   }
 
+  /* Supprime un élément après confirmation (bouton « Supprimer » ou touche Suppr ; Entrée valide). */
+  let removing = false;
+  app.confirmRemove = async function (id) {
+    if (removing || !id || !MP.find(app.sc, id)) return;
+    removing = true;
+    const ok = await MP.dialog({ title: 'Supprimer', message: 'Supprimer « ' + MP.nameOf(app.sc, id) + ' » ? Les liens vers cet élément seront retirés.', okLabel: 'Supprimer', danger: true });
+    removing = false;
+    if (!ok || !MP.find(app.sc, id)) return;
+    MP.remove(app.sc, id);
+    app.select(null);
+    app.changed({});
+  };
+
   /* ---------- Import / export ---------- */
   function exportScenario() {
     const json = JSON.stringify(MP.exportData(app.sc), null, 2);
@@ -462,7 +475,12 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !e.target.matches('input, textarea, select') && !document.querySelector('.modal-back')) app.select(null);
+      const typing = e.target.matches('input, textarea, select, [contenteditable]');
+      if (e.key === 'Escape' && !typing && !document.querySelector('.modal-back')) app.select(null);
+      if (e.key === 'Delete' && !typing && !app.simOn && app.selected && !document.querySelector('.modal-back')) {
+        e.preventDefault();
+        app.confirmRemove(app.selected);
+      }
     });
     window.addEventListener('resize', () => graphView.applyView());
   }

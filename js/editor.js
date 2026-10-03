@@ -135,10 +135,7 @@
     actions(id) {
       const bar = h('div', { class: 'panel-actions' }, [
         h('button', { type: 'button', text: 'Dupliquer', onclick: () => { const c = MP.duplicate(this.app.sc, id); this.app.changed({}); this.app.select(c.id); } }),
-        h('button', { type: 'button', class: 'danger', text: 'Supprimer', onclick: async () => {
-          if (!(await MP.dialog({ title: 'Supprimer', message: 'Supprimer « ' + MP.nameOf(this.app.sc, id) + ' » ? Les liens vers cet élément seront retirés.', okLabel: 'Supprimer', danger: true }))) return;
-          MP.remove(this.app.sc, id); this.app.select(null); this.app.changed({});
-        } }),
+        h('button', { type: 'button', class: 'danger', text: 'Supprimer', title: 'Supprimer (touche Suppr)', onclick: () => this.app.confirmRemove(id) }),
       ]);
       this.root.appendChild(bar);
     }

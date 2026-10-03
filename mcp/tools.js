@@ -508,4 +508,4 @@ function call(name, args) {
   }
 }
 
-module.exports = { definitions, call, dir };
+module.exports = { definitions, call, dir, summary, analysis, MP };

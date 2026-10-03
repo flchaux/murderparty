@@ -26,27 +26,95 @@
   let saveWarned = false;
   function save() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      app.sc.updatedAt = Date.now();
-      app.lib.scenarios[app.sc.id] = app.sc;
-      app.lib.current = app.sc.id;
-      if (!MP.storage.save(app.lib) && !saveWarned) {
-        saveWarned = true;
-        MP.notify('Enregistrement impossible', 'Ce navigateur refuse l\'enregistrement local (navigation privée ?). Pensez à exporter votre scénario en JSON.');
-      }
-    }, 300);
+    saveTimer = setTimeout(flushSave, 300);
   }
 
-  function open(sc) {
+  function flushSave() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    app.sc.updatedAt = Date.now();
+    app.lib.scenarios[app.sc.id] = app.sc;
+    app.lib.current = app.sc.id;
+    if (MP.cloud.db) MP.cloud.write(app.sc);
+    if (!MP.storage.save(app.lib) && !saveWarned && !MP.cloud.db) {
+      saveWarned = true;
+      MP.notify('Enregistrement impossible', 'Ce navigateur refuse l\'enregistrement local (navigation privée ?). Pensez à exporter votre scénario en JSON.');
+    }
+  }
+
+  /* persist=false : scénario affiché sans être réenregistré (déjà enregistré, ou exemple du premier lancement). */
+  function open(sc, persist = true) {
+    if (saveTimer) flushSave();
     app.sc = MP.normalize(sc);
+    if (!MP.cloud.validId(app.sc.id)) app.sc.id = MP.uid('sc');
     app.lib.scenarios[app.sc.id] = app.sc;
     app.lib.current = app.sc.id;
     app.selected = null;
     app.sim = null;
     app.simOn = false;
-    save();
+    if (persist) save();
+    else MP.storage.save(app.lib);
     app.refresh();
     requestAnimationFrame(() => graphView.fit());
+  }
+
+  /* ---------- Enregistrement en ligne ---------- */
+  let cloudWarned = false;
+  function cloudError(e, op) {
+    if (cloudWarned) return;
+    cloudWarned = true;
+    if (MP.cloud.readOnly) {
+      MP.notify('Lecture seule', 'Vous pouvez consulter ces scénarios mais pas les modifier en ligne. Vos changements restent dans ce navigateur.');
+    } else if (e && e.code === 'quota_exceeded') {
+      MP.notify('Espace en ligne plein', 'Le scénario n\'a pas pu être enregistré en ligne. Supprimez des scénarios inutiles ou exportez-les.');
+    } else {
+      MP.notify('Enregistrement en ligne impossible', (op === 'delete' ? 'La suppression' : 'L\'enregistrement') + ' n\'a pas abouti. Vos changements restent dans ce navigateur ; exportez le scénario par précaution.');
+    }
+  }
+
+  /* Changements venus d'ailleurs (Claude, un autre onglet, un co-auteur) : on les affiche. */
+  function applyRemote(changes) {
+    let currentTouched = false;
+    let listTouched = false;
+    for (const c of changes) {
+      const local = app.lib.scenarios[c.id];
+      if (c.type === 'removed') {
+        if (!local || MP.cloud.pending[c.id] !== undefined) continue;
+        delete app.lib.scenarios[c.id];
+        listTouched = true;
+        if (app.sc && app.sc.id === c.id) currentTouched = 'removed';
+        continue;
+      }
+      const remote = MP.cloud.toScenario(c.id, c.data);
+      if (!remote) continue;
+      if (local && (Number(remote.updatedAt) || 0) <= (Number(local.updatedAt) || 0)) continue;
+      app.lib.scenarios[c.id] = remote;
+      listTouched = true;
+      if (app.sc && app.sc.id === c.id) currentTouched = 'updated';
+    }
+    if (!listTouched) return;
+    MP.storage.save(app.lib);
+    if (currentTouched === 'removed') {
+      const rest = Object.values(app.lib.scenarios).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      open(rest[0] || MP.exampleScenario(), !!rest[0]);
+    } else if (currentTouched === 'updated') {
+      // Le formulaire ouvert pointe vers l'ancienne version : on le reconstruit.
+      if (document.activeElement && $('#panel').contains(document.activeElement)) document.activeElement.blur();
+      app.sc = app.lib.scenarios[app.sc.id];
+      if (app.selected && !MP.find(app.sc, app.selected)) app.selected = null;
+      if (app.simOn) app.sim = new MP.Simulation(app.sc);
+      app.refresh();
+    } else {
+      renderHeader();
+    }
+  }
+
+  function renderSync() {
+    const el = $('#sync-status');
+    if (!MP.cloud.db) { el.hidden = true; return; }
+    el.hidden = false;
+    el.textContent = MP.cloud.readOnly ? 'En ligne, lecture seule' : 'Enregistré en ligne';
+    el.title = 'Vos scénarios sont enregistrés en ligne : Claude peut les lire et les modifier, et cette page se met à jour toute seule.';
   }
 
   /* ---------- Rendu ---------- */
@@ -344,7 +412,7 @@
       app.refresh();
     });
 
-    $('#library').addEventListener('change', (e) => open(app.lib.scenarios[e.target.value]));
+    $('#library').addEventListener('change', (e) => open(app.lib.scenarios[e.target.value], false));
 
     $$('[data-action]').forEach((b) => b.addEventListener('click', async () => {
       const act = b.dataset.action;
@@ -361,8 +429,9 @@
       } else if (act === 'export') {
         exportScenario();
       } else if (act === 'delete') {
-        if (!(await MP.dialog({ title: 'Supprimer le scénario', message: `Supprimer définitivement « ${app.sc.title} » de ce navigateur ? Exportez-le d'abord si vous voulez le garder.`, okLabel: 'Supprimer', danger: true }))) return;
+        if (!(await MP.dialog({ title: 'Supprimer le scénario', message: `Supprimer définitivement « ${app.sc.title} »${MP.cloud.db ? '' : ' de ce navigateur'} ? Exportez-le d'abord si vous voulez le garder.`, okLabel: 'Supprimer', danger: true }))) return;
         delete app.lib.scenarios[app.sc.id];
+        if (MP.cloud.db) MP.cloud.remove(app.sc.id);
         const rest = Object.values(app.lib.scenarios).sort((a, c) => (c.updatedAt || 0) - (a.updatedAt || 0));
         open(rest[0] || MP.newScenario());
       }
@@ -388,7 +457,7 @@
   }
 
   /* ---------- Démarrage ---------- */
-  function start() {
+  async function start() {
     graphView = new MP.GraphView($('#graph'), {
       onSelect: (id) => app.select(id),
       onMove: (id, x, y) => {
@@ -409,7 +478,40 @@
     setView('graph');
     const current = app.lib.current && app.lib.scenarios[app.lib.current];
     const first = current || Object.values(app.lib.scenarios)[0];
-    open(first || MP.exampleScenario());
+    open(first || MP.exampleScenario(), false);
+
+    // En ligne : la bibliothèque devient celle de la base partagée.
+    if (!(await MP.cloud.connect())) return;
+    MP.cloud.onError = (e, op) => { cloudError(e, op); renderSync(); };
+    let firstSnapshot = true;
+    MP.cloud.subscribe((changes) => {
+      if (!firstSnapshot) { applyRemote(changes); return; }
+      firstSnapshot = false;
+      const local = app.lib.scenarios;
+      const remote = {};
+      for (const c of changes) {
+        const sc = MP.cloud.toScenario(c.id, c.data);
+        if (sc) remote[c.id] = sc;
+      }
+      // Premier passage en ligne : on y range, une seule fois, les scénarios créés dans ce navigateur.
+      if (!app.lib.migrated && !MP.cloud.readOnly) {
+        for (const sc of Object.values(local)) {
+          if (remote[sc.id] || (!first && sc === app.sc) || !MP.cloud.validId(sc.id)) continue;
+          remote[sc.id] = sc;
+          MP.cloud.write(sc);
+        }
+        app.lib.migrated = true;
+      }
+      app.lib.scenarios = remote;
+      const keep = app.sc && remote[app.sc.id];
+      const next = keep || (app.lib.current && remote[app.lib.current])
+        || Object.values(remote).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+      if (next) open(next, false);
+      else open(MP.exampleScenario(), false);
+      MP.storage.save(app.lib);
+      renderSync();
+    }, () => { MP.cloud.db = null; renderSync(); });
+    renderSync();
   }
 
   start();

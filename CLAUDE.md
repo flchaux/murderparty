@@ -25,6 +25,14 @@ Pour créer ou modifier un scénario quand on le demande :
 `updatedAt` doit toujours être plus récent que la version en ligne, sinon la page ignore le changement.
 Ne jamais supprimer un scénario sans confirmation.
 
+## Version installée sur le serveur du propriétaire (VPS)
+
+`serveur/serveur.js` sert l'outil (mot de passe), range les scénarios sur le disque et expose
+le connecteur MCP `/mcp/<clé>` que le propriétaire ajoute dans claude.ai. Quand ce connecteur
+est actif dans la conversation, passer par ses outils (`lister_scenarios`, `ecrire_scenario`,
+`ajouter_elements`, `analyser_scenario`…) : la page ouverte se met à jour toute seule.
+Installation : `docs/SERVEUR.md`. Les deux versions (claude.ai et serveur) ne partagent pas leurs scénarios.
+
 ## Publier une nouvelle version de la page
 
 `python3 tools/build-artifact.py <dossier>/index.html`, copier `css/` et `js/` à côté,
@@ -32,4 +40,4 @@ publier sur la même URL avec ces fichiers et `capabilities: {db: {}, downloads:
 
 ## Tests
 
-`node tests/import-export.test.js` et `node tests/mcp.test.js`.
+`node tests/import-export.test.js`, `node tests/mcp.test.js` et `node tests/serveur.test.js`.

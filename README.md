@@ -29,6 +29,12 @@ glisser-déposer du fichier sur la page, pour le recharger.
   prêt à être copié, modifié et importé.
 - `node tests/import-export.test.js` vérifie le format, `node tests/mcp.test.js` le serveur MCP.
 
+## Sur votre serveur, relié à Claude
+
+`serveur/serveur.js` sert l'outil avec un mot de passe, enregistre les scénarios sur le serveur
+et fournit un connecteur à ajouter dans claude.ai : Claude crée et modifie les scénarios,
+la page se met à jour toute seule. Installation pas à pas : [`docs/SERVEUR.md`](docs/SERVEUR.md).
+
 ## Commander un scénario à Claude (MCP)
 
 Le serveur MCP `mcp/server.js` (Node.js seul, sans installation) donne à Claude des outils pour
@@ -64,7 +70,9 @@ index.html
 docs/FORMAT-JSON.md
 modeles/modele-complet.json
 docs/MCP.md
-mcp/server.js   serveur MCP (protocole, stdio)
+mcp/protocol.js protocole MCP
+mcp/server.js   serveur MCP local (stdio)
+serveur/        serveur pour VPS : outil web, API, connecteur MCP, fichiers d'installation
 mcp/tools.js    outils MCP : lecture, écriture, analyse des scénarios
 tests/import-export.test.js
 tests/mcp.test.js
@@ -75,7 +83,7 @@ js/model.js     modèle de données et stockage local
 js/example.js   scénario d'exemple
 js/engine.js    vérifications et simulation
 js/io.js        import et export JSON
-js/cloud.js     enregistrement en ligne (base de la page publiée)
+js/cloud.js     enregistrement partagé (base de la page publiée, ou votre serveur)
 js/platform.js  boîtes de dialogue, téléchargement, impression (local ou en ligne)
 js/graph.js     mise en page et rendu du graphe
 js/editor.js    formulaires d'édition

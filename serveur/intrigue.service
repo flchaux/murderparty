@@ -1,0 +1,19 @@
+# Service systemd : copier dans /etc/systemd/system/intrigue.service
+# Adapter WorkingDirectory et ExecStart au dossier où se trouve le projet.
+[Unit]
+Description=Intrigue, atelier de scénarios
+After=network.target
+
+[Service]
+Type=simple
+User=intrigue
+WorkingDirectory=/opt/intrigue
+EnvironmentFile=/etc/intrigue.env
+ExecStart=/usr/bin/node /opt/intrigue/serveur/serveur.js
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/intrigue
+
+[Install]
+WantedBy=multi-user.target

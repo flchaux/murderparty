@@ -35,8 +35,8 @@
     app.sc.updatedAt = Date.now();
     app.lib.scenarios[app.sc.id] = app.sc;
     app.lib.current = app.sc.id;
-    if (MP.cloud.db) MP.cloud.write(app.sc);
-    if (!MP.storage.save(app.lib) && !saveWarned && !MP.cloud.db) {
+    if (MP.cloud.on) MP.cloud.write(app.sc);
+    if (!MP.storage.save(app.lib) && !saveWarned && !MP.cloud.on) {
       saveWarned = true;
       MP.notify('Enregistrement impossible', 'Ce navigateur refuse l\'enregistrement local (navigation privée ?). Pensez à exporter votre scénario en JSON.');
     }
@@ -60,13 +60,24 @@
 
   /* ---------- Enregistrement en ligne ---------- */
   let cloudWarned = false;
-  function cloudError(e, op) {
+  let relogging = false;
+  async function cloudError(e, op) {
+    // Session expirée sur votre serveur : on redemande le mot de passe, puis on renvoie le scénario ouvert.
+    if (e && e.code === 'unauthenticated') {
+      if (relogging) return;
+      relogging = true;
+      const back = await MP.cloud.reconnect();
+      relogging = false;
+      if (back) { save(); return; }
+    }
     if (cloudWarned) return;
     cloudWarned = true;
     if (MP.cloud.readOnly) {
       MP.notify('Lecture seule', 'Vous pouvez consulter ces scénarios mais pas les modifier en ligne. Vos changements restent dans ce navigateur.');
     } else if (e && e.code === 'quota_exceeded') {
       MP.notify('Espace en ligne plein', 'Le scénario n\'a pas pu être enregistré en ligne. Supprimez des scénarios inutiles ou exportez-les.');
+    } else if (op === 'subscribe') {
+      MP.notify('Serveur injoignable', 'Les scénarios du serveur n\'ont pas pu être chargés. Vos changements restent dans ce navigateur ; rechargez la page plus tard.');
     } else {
       MP.notify('Enregistrement en ligne impossible', (op === 'delete' ? 'La suppression' : 'L\'enregistrement') + ' n\'a pas abouti. Vos changements restent dans ce navigateur ; exportez le scénario par précaution.');
     }
@@ -111,9 +122,9 @@
 
   function renderSync() {
     const el = $('#sync-status');
-    if (!MP.cloud.db) { el.hidden = true; return; }
+    if (!MP.cloud.on) { el.hidden = true; return; }
     el.hidden = false;
-    el.textContent = MP.cloud.readOnly ? 'En ligne, lecture seule' : 'Enregistré en ligne';
+    el.textContent = MP.cloud.readOnly ? 'En ligne, lecture seule' : MP.cloud.mode === 'server' ? 'Enregistré sur le serveur' : 'Enregistré en ligne';
     el.title = 'Vos scénarios sont enregistrés en ligne : Claude peut les lire et les modifier, et cette page se met à jour toute seule.';
   }
 
@@ -429,9 +440,9 @@
       } else if (act === 'export') {
         exportScenario();
       } else if (act === 'delete') {
-        if (!(await MP.dialog({ title: 'Supprimer le scénario', message: `Supprimer définitivement « ${app.sc.title} »${MP.cloud.db ? '' : ' de ce navigateur'} ? Exportez-le d'abord si vous voulez le garder.`, okLabel: 'Supprimer', danger: true }))) return;
+        if (!(await MP.dialog({ title: 'Supprimer le scénario', message: `Supprimer définitivement « ${app.sc.title} »${MP.cloud.on ? '' : ' de ce navigateur'} ? Exportez-le d'abord si vous voulez le garder.`, okLabel: 'Supprimer', danger: true }))) return;
         delete app.lib.scenarios[app.sc.id];
-        if (MP.cloud.db) MP.cloud.remove(app.sc.id);
+        if (MP.cloud.on) MP.cloud.remove(app.sc.id);
         const rest = Object.values(app.lib.scenarios).sort((a, c) => (c.updatedAt || 0) - (a.updatedAt || 0));
         open(rest[0] || MP.newScenario());
       }
@@ -510,7 +521,11 @@
       else open(MP.exampleScenario(), false);
       MP.storage.save(app.lib);
       renderSync();
-    }, () => { MP.cloud.db = null; renderSync(); });
+    }, (e) => {
+      MP.cloud.on = false;
+      renderSync();
+      if (MP.cloud.mode === 'server') cloudError(e, 'subscribe');
+    });
     renderSync();
   }
 

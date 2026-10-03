@@ -14,6 +14,10 @@ const ROOT = path.join(__dirname, '..');
 
 class ToolError extends Error {}
 
+/* Prévenu à chaque changement de fichier : (type « modified » | « removed », id, données exportées). */
+let listener = null;
+function changed(type, id, data) { if (listener) listener(type, id, data); }
+
 /* ---------- Stockage sur disque ---------- */
 
 function dir() {
@@ -29,7 +33,7 @@ function slug(s) {
 
 function readAll() {
   const d = dir();
-  return fs.readdirSync(d).filter((f) => f.endsWith('.json')).sort().map((file) => {
+  return fs.readdirSync(d).filter((f) => f.endsWith('.json') && !f.startsWith('.')).sort().map((file) => {
     try {
       const { scenario, warnings } = MP.importData(fs.readFileSync(path.join(d, file), 'utf8'));
       return { file, scenario, warnings };
@@ -60,6 +64,7 @@ function save(sc, file) {
   const tmp = target + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(MP.exportData(sc), null, 2) + '\n', 'utf8');
   fs.renameSync(tmp, target);
+  changed('modified', sc.id, MP.exportData(sc));
   return target;
 }
 
@@ -221,6 +226,7 @@ function withWarnings(text, warnings) {
 }
 
 function fileNote(file) {
+  if (process.env.INTRIGUE_WEB_URL) return `Visible dans Intrigue : ${process.env.INTRIGUE_WEB_URL} (la page ouverte se met à jour toute seule).`;
   return `Fichier : ${path.join(dir(), file)} (à importer dans Intrigue avec le bouton « Importer »).`;
 }
 
@@ -487,6 +493,7 @@ const handlers = {
   supprimer_scenario({ scenario }) {
     const hit = load(scenario);
     fs.unlinkSync(path.join(dir(), hit.file));
+    changed('removed', hit.scenario.id);
     return `Scénario « ${hit.scenario.title} » supprimé (${hit.file}).`;
   },
 
@@ -508,4 +515,30 @@ function call(name, args) {
   }
 }
 
-module.exports = { definitions, call, dir, summary, analysis, MP };
+/* ---------- Accès direct, pour l'API web ---------- */
+
+const VALID_ID = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
+
+const store = {
+  validId: (id) => VALID_ID.test(String(id)) && id !== '.' && id !== '..',
+  list() {
+    return readAll().filter((x) => x.scenario).map((x) => MP.exportData(x.scenario));
+  },
+  /* Enregistre un scénario envoyé par la page ; l'heure du serveur fait foi. */
+  put(id, data) {
+    const { scenario } = MP.importData(data);
+    scenario.id = id;
+    const hit = readAll().find((x) => x.scenario && x.scenario.id === id);
+    save(scenario, hit ? hit.file : freeFileFor(id));
+    return scenario.updatedAt;
+  },
+  remove(id) {
+    const hit = readAll().find((x) => x.scenario && x.scenario.id === id);
+    if (!hit) return false;
+    fs.unlinkSync(path.join(dir(), hit.file));
+    changed('removed', id);
+    return true;
+  },
+};
+
+module.exports = { definitions, call, dir, summary, analysis, MP, store, ToolError, onChange: (fn) => { listener = fn; } };

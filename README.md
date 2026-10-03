@@ -23,7 +23,14 @@ glisser-déposer du fichier sur la page, pour le recharger.
   exemple minimal, conseils pour écrire ou faire générer un scénario.
 - [`modeles/modele-complet.json`](modeles/modele-complet.json) : modèle qui utilise tous les champs,
   prêt à être copié, modifié et importé.
-- `node tests/import-export.test.js` vérifie le format.
+- `node tests/import-export.test.js` vérifie le format, `node tests/mcp.test.js` le serveur MCP.
+
+## Commander un scénario à Claude (MCP)
+
+Le serveur MCP `mcp/server.js` (Node.js seul, sans installation) donne à Claude des outils pour
+créer, compléter, modifier et analyser des scénarios. Ils sont enregistrés dans `scenarios/`,
+au format d'export, prêts à être importés dans l'outil. Dans ce dépôt, `.mcp.json` le déclare
+pour Claude Code ; pour Claude Desktop et le détail des outils, voir [`docs/MCP.md`](docs/MCP.md).
 
 ## Le modèle
 
@@ -52,7 +59,11 @@ glisser-déposer du fichier sur la page, pour le recharger.
 index.html
 docs/FORMAT-JSON.md
 modeles/modele-complet.json
+docs/MCP.md
+mcp/server.js   serveur MCP (protocole, stdio)
+mcp/tools.js    outils MCP : lecture, écriture, analyse des scénarios
 tests/import-export.test.js
+tests/mcp.test.js
 tools/build-artifact.py
 css/style.css
 js/model.js     modèle de données et stockage local

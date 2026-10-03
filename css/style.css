@@ -124,6 +124,9 @@ label.check { display: inline-flex; align-items: center; gap: 6px; cursor: point
 .scenario-title:hover { background: var(--surface-2); }
 .pill { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-main); }
 #library { width: auto; max-width: 220px; }
+.pill.sync { white-space: nowrap; background: transparent; color: var(--muted, inherit); border: 1px solid var(--border); }
+.pill.sync::before { content: '● '; color: #16a34a; }
+.pill[hidden] { display: none; }
 
 .sidebar {
   display: flex; flex-direction: column; min-height: 0;

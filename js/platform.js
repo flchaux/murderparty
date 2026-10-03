@@ -41,7 +41,7 @@
       let input = null;
       if (opts.input) {
         input = document.createElement('input');
-        input.type = 'text';
+        input.type = opts.password ? 'password' : 'text';
         input.id = 'modal-input';
         input.value = opts.defaultValue || '';
         box.appendChild(input);
